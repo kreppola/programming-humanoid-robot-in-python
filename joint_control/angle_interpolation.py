@@ -21,7 +21,7 @@
 
 
 from pid import PIDAgent
-from keyframes import hello
+from keyframes import hello, leftBackToStand
 
 
 class AngleInterpolationAgent(PIDAgent):
@@ -33,6 +33,8 @@ class AngleInterpolationAgent(PIDAgent):
         super(AngleInterpolationAgent, self).__init__(simspark_ip, simspark_port, teamname, player_id, sync_mode)
         self.keyframes = ([], [], [])
 
+        self.startTime = self.perception.time
+
     def think(self, perception):
         target_joints = self.angle_interpolation(self.keyframes, perception)
         target_joints['RHipYawPitch'] = target_joints['LHipYawPitch'] # copy missing joint in keyframes
@@ -42,10 +44,58 @@ class AngleInterpolationAgent(PIDAgent):
     def angle_interpolation(self, keyframes, perception):
         target_joints = {}
         # YOUR CODE HERE
+        times = self.keyframes[1]
+        keys = self.keyframes[2]
+
+        stopTime = max([times[i][-1] for i in range(len(keyframes[0]))], default=-1.0)
+
+        if perception.time - self.startTime > stopTime:
+            self.startTime = perception.time
+
+        time = perception.time - self.startTime
+
+        for joint in perception.joint:
+            target_joints[joint] = 0.0
+
+        # for each joint
+        for joint in range(len(keyframes[0])):
+            # get the current step
+            current_step = len(times[joint])
+            for step in range(0, len(times[joint])):
+                if time < times[joint][step]:
+                    current_step = step
+                    break
+
+            if current_step == len(times[joint]):
+                break
+
+            # get the points for the bezier
+            if current_step == 0:
+                p_0 = (0,0)
+                p_1 = (0,0)
+                p_3 = (keys[joint][current_step][0], times[joint][current_step])
+                p_2 = (p_3[0] + keys[joint][current_step][1][2], p_3[1] + keys[joint][current_step][1][1])
+            else:
+                p_0 = (keys[joint][current_step - 1][0], times[joint][current_step - 1])
+                p_1 = (p_0[0] + keys[joint][current_step - 1][2][2], p_0[1] + keys[joint][current_step - 1][2][1])
+                p_3 = (keys[joint][current_step][0], times[joint][current_step])
+                p_2 = (p_3[0] + keys[joint][current_step][1][2], p_3[1] + keys[joint][current_step][1][1])
+
+
+            # find the value for i
+            i = 0.0
+            bt = -100
+            while i < 1.0 and bt < time:
+                bt = (1-i)**3 * p_0[1] + 3 * (1-i)**2 * i * p_1[1] + 3 * (1-i) * i**2 * p_2[1] + i**3 * p_3[1]
+                i = i + 0.01
+
+            # find value joint
+            bv = (1-i)**3 * p_0[0] + 3* (1-i)**2 * i * p_1[0] + 3 * (1-i) * i**2 * p_2[0] + i**3 * p_3[0]
+            target_joints[self.keyframes[0][joint]] = bv
 
         return target_joints
 
 if __name__ == '__main__':
     agent = AngleInterpolationAgent()
-    agent.keyframes = hello()  # CHANGE DIFFERENT KEYFRAMES
+    agent.keyframes =  leftBackToStand() # CHANGE DIFFERENT KEYFRAMES
     agent.run()

@@ -35,10 +35,10 @@ class PIDController(object):
         self.e2 = np.zeros(size)
         # ADJUST PARAMETERS BELOW
         delay = 0
-        self.Kp = 0
-        self.Ki = 0
-        self.Kd = 0
-        self.y = deque(np.zeros(size), maxlen=delay + 1)
+        self.Kp = 17
+        self.Ki = 0.0
+        self.Kd = 0.1
+        self.y = deque([np.zeros(size) for i in range(0, delay + 1)], maxlen=delay + 1)
 
     def set_delay(self, delay):
         '''
@@ -54,7 +54,27 @@ class PIDController(object):
         '''
         # YOUR CODE HERE
 
-        return self.u
+        # control signal
+        e_0 = np.zeros(len(self.u))
+        for i in (range(0, len(self.u))):
+            e_0[i] = target[i] - (sensor[i] - self.y[-1][i] + self.y[0][i])
+
+            res_e0 = (self.Kp + (self.Ki * self.dt) + (self.Kd / self.dt)) * e_0[i]
+            res_e1 = (self.Kp + (2 * (self.Kd / self.dt))) * self.e1[i]
+            res_e2 = (self.Kd / self.dt) * self.e2[i] 
+
+            self.u[i] = self.u[i] + res_e0 - res_e1 + res_e2
+
+        # Predict the values of the joints
+        prediction = np.zeros(len(self.u))
+        for i in range(0, len(self.u)):
+            prediction[i] = self.y[0][i] + (self.u[i] * self.dt)
+        self.y.appendleft(prediction)
+
+        self.e2 = self.e1
+        self.e1 = e_0
+
+        return self.u 
 
 
 class PIDAgent(SparkAgent):
