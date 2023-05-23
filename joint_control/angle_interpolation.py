@@ -21,7 +21,7 @@
 
 
 from pid import PIDAgent
-from keyframes import hello, leftBackToStand
+from keyframes import hello, leftBackToStand, fallDownBack, stretch
 
 
 class AngleInterpolationAgent(PIDAgent):
@@ -47,13 +47,18 @@ class AngleInterpolationAgent(PIDAgent):
         times = self.keyframes[1]
         keys = self.keyframes[2]
 
+        # duration of the movement
         stopTime = max([times[i][-1] for i in range(len(keyframes[0]))], default=-1.0)
 
+        # if movement is finished, restart movement
         if perception.time - self.startTime > stopTime:
-            self.startTime = perception.time
+            #self.startTime = perception.time
+            self.keyframes = ([], [], [])
 
+        # current time of the movement
         time = perception.time - self.startTime
 
+        # initialize joints
         for joint in perception.joint:
             target_joints[joint] = 0.0
 
@@ -66,6 +71,7 @@ class AngleInterpolationAgent(PIDAgent):
                     current_step = step
                     break
 
+            # when last step
             if current_step == len(times[joint]):
                 break
 
@@ -81,10 +87,9 @@ class AngleInterpolationAgent(PIDAgent):
                 p_3 = (keys[joint][current_step][0], times[joint][current_step])
                 p_2 = (p_3[0] + keys[joint][current_step][1][2], p_3[1] + keys[joint][current_step][1][1])
 
-
             # find the value for i
             i = 0.0
-            bt = -100
+            bt = 0.0
             while i < 1.0 and bt < time:
                 bt = (1-i)**3 * p_0[1] + 3 * (1-i)**2 * i * p_1[1] + 3 * (1-i) * i**2 * p_2[1] + i**3 * p_3[1]
                 i = i + 0.01
@@ -95,7 +100,10 @@ class AngleInterpolationAgent(PIDAgent):
 
         return target_joints
 
+    def restart_keyframe(perception):
+        self.startTime = self.perception
+
 if __name__ == '__main__':
     agent = AngleInterpolationAgent()
-    agent.keyframes =  leftBackToStand() # CHANGE DIFFERENT KEYFRAMES
+    agent.keyframes =  stretch() # CHANGE DIFFERENT KEYFRAMES
     agent.run()

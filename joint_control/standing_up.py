@@ -7,10 +7,11 @@
 
 
 from recognize_posture import PostureRecognitionAgent
-from keyframes import rightBackToStand, leftBackToStand, rightBellyToStand, leftBellyToStand
+from keyframes import rightBackToStand, leftBackToStand, rightBellyToStand, leftBellyToStand, fallDownBack
 
 
 class StandingUpAgent(PostureRecognitionAgent):
+
     def think(self, perception):
         self.standing_up()
         return super(StandingUpAgent, self).think(perception)
@@ -22,6 +23,9 @@ class StandingUpAgent(PostureRecognitionAgent):
             self.keyframes = rightBackToStand()
         elif posture == 8:
             self.keyframes = rightBellyToStand()
+        #elif posture == 9:
+        #    self.keyframes = ([],[],[])
+        print(posture)
 
 
 
@@ -50,7 +54,33 @@ class TestStandingUpAgent(StandingUpAgent):
 
         return action
 
+class TestStandingUpAgent2(StandingUpAgent):
+    """this agent falls down to the back with a keyframe"""
+
+    def __init__(self, simspark_ip='localhost',
+                 simspark_port=3100,
+                 teamname='DAInamite',
+                 player_id=0,
+                 sync_mode=True):
+        super(TestStandingUpAgent2, self).__init__(simspark_ip, simspark_port, teamname, player_id, sync_mode)
+        self.startTime = 0
+        self.off_cycle = 0.5
+        self.on_cycle = 10
+        self.fallingDown = True
+
+    def think(self, perception):
+        time_now = perception.time
+
+        if time_now - self.startTime < self.off_cycle:
+            self.keyframes = fallDownBack()
+
+        if time_now - self.startTime > self.off_cycle + self.on_cycle:
+            self.startTime = time_now
+        
+        action = super(TestStandingUpAgent2, self).think(perception)
+
+        return action
 
 if __name__ == '__main__':
-    agent = TestStandingUpAgent()
+    agent = TestStandingUpAgent2()
     agent.run()

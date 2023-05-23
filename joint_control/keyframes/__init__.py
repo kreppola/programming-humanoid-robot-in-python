@@ -8,3 +8,5 @@ from .rightBellyToStand import rightBellyToStand
 
 from .hello import hello
 from .wipe_forehead import wipe_forehead
+from .fallDownBack import fallDownBack
+from .stretch import stretch
