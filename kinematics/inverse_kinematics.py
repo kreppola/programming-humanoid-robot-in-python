@@ -13,6 +13,13 @@
 from forward_kinematics import ForwardKinematicsAgent
 from numpy.matlib import identity
 
+import numpy as np
+
+from scipy.optimize import fmin, fmin_tnc
+
+import random
+
+from math import sqrt
 
 class InverseKinematicsAgent(ForwardKinematicsAgent):
     def inverse_kinematics(self, effector_name, transform):
@@ -23,14 +30,60 @@ class InverseKinematicsAgent(ForwardKinematicsAgent):
         :return: list of joint angles
         '''
         joint_angles = []
+
         # YOUR CODE HERE
-        return joint_angles
+        
+        # define the function
+        func = lambda joint_values: self.error_function(transform, joint_values, joint_names)
+        # initialize joint_names and joint_angles
+        joint_names = self.chains[effector_name]
+        joint_angles = [0 for j in range(0, len(joint_names))]
+        # load the ranges of joint
+        bounds = [self.ranges[j] for j in joint_names]
+        # optimize the function
+        return fmin_tnc(func, joint_angles, bounds = bounds, approx_grad = True, maxfun=1000)[0]
+
+
+    def endEffectorPos(self, joint_values, joint_names):
+        """
+        Determines pos of Effector
+        """
+        Ts = [identity(4)]
+        for joint in range(len(joint_values)):
+            angle = joint_values[joint]
+            Tl = self.local_trans(joint_names[joint], angle)
+            T = np.dot(Ts[-1], Tl)
+            Ts.append(T)
+        return Ts[-1]
+
+    def error_function(self, target, joint_values, joint_names):
+
+        # Get Positon of Eff
+        Te = self.endEffectorPos(joint_values, joint_names)
+
+        # Error
+        error = target - Te
+        error = np.linalg.norm(error)
+
+        # sometimes the optimization finds weird local minima
+        # e helps here
+        e = np.sum([-j if j < 0 else j for j in joint_values])
+        e = sqrt(e) * 1e-2
+
+        return error - e  
 
     def set_transforms(self, effector_name, transform):
         '''solve the inverse kinematics and control joints use the results
         '''
         # YOUR CODE HERE
         self.keyframes = ([], [], [])  # the result joint angles have to fill in
+        jvalues = self.inverse_kinematics(effector_name, transform)
+
+        for m in range(0, len(jvalues)):
+            self.keyframes[0].append(self.chains[effector_name][m])
+            self.keyframes[1].append([5, 10])
+            self.keyframes[2].append([[jvalues[m], [3, 0, 0], [3, 0, 0]],
+                                    [0, [3, 0, 0], [3, 0, 0]]])
 
 if __name__ == '__main__':
     agent = InverseKinematicsAgent()
