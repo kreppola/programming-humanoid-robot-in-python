@@ -28,6 +28,8 @@ import threading
 
 from numpy.matlib import identity, matrix
 
+import numpy as np
+
 class ServerAgent(InverseKinematicsAgent):
     '''ServerAgent provides RPC service
     '''
@@ -89,7 +91,7 @@ class ServerAgent(InverseKinematicsAgent):
         '''get transform with given name
         '''
         # YOUR CODE HERE
-        self.transforms[name]
+        return self.transforms[name].tolist()
 
     def set_transform_nonblocking(self, effector_name, transform):
 

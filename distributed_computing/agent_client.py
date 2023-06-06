@@ -82,7 +82,8 @@ class ClientAgent(object):
     def get_transform(self, name):
         '''get transform with given name
         '''
-        return self.proxy.get_transform(name)
+        
+        return matrix(self.proxy.get_transform(name))
         # YOUR CODE HERE
 
     def set_transform(self, effector_name, transform):
@@ -112,7 +113,7 @@ if __name__ == '__main__':
     agent.execute_keyframes(rightBackToStand())
     print(agent.set_angle('RElbowRoll', 0.5))
     print(agent.get_angle("RElbowRoll"))
-
+    print(agent.get_transform("RElbowRoll"))
     agent.post.set_transform('LLeg', T)
     print(agent.get_posture())
     time.sleep(15)
