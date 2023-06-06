@@ -116,18 +116,18 @@ class ForwardKinematicsAgent(PostureRecognitionAgent):
                             [0, cos, -sin, 0],
                             [0, sin, cos, 0],
                             [0, 0, 0, 1]]))
-        # joint Pitch Corresponds to y axis Rotation
-        elif 'Pitch' in joint_name:
-            T = numpy.dot(T, numpy.matrix([[cos, 0, sin, 0],
-                                    [0, 1, 0, 0],
-                                    [-sin, 0, cos, 0],
-                                    [0, 0, 0, 1]]))
         # z axis Rotation
         elif 'Yaw' in joint_name:
             T = numpy.dot(T, numpy.matrix([[cos, sin, 0, 0],
                             [-sin, cos, 0, 0],
                             [0, 0, 1, 0],
                             [0, 0, 0, 1]]))
+        # joint Pitch Corresponds to y axis Rotation
+        elif 'Pitch' in joint_name:
+            T = numpy.dot(T, numpy.matrix([[cos, 0, sin, 0],
+                                    [0, 1, 0, 0],
+                                    [-sin, 0, cos, 0],
+                                    [0, 0, 0, 1]]))
 
         # now we need to add the translation
         for j in range(0,3):

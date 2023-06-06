@@ -65,12 +65,7 @@ class InverseKinematicsAgent(ForwardKinematicsAgent):
         error = target - Te
         error = np.linalg.norm(error)
 
-        # sometimes the optimization finds weird local minima
-        # e helps here
-        e = np.sum([-j if j < 0 else j for j in joint_values])
-        e = sqrt(e) * 1e-2
-
-        return error - e  
+        return error  
 
     def set_transforms(self, effector_name, transform):
         '''solve the inverse kinematics and control joints use the results
@@ -91,5 +86,6 @@ if __name__ == '__main__':
     T = identity(4)
     T[-1, 1] = 0.05
     T[-1, 2] = -0.26
+    T[-1, 0] = 0.2
     agent.set_transforms('LLeg', T)
     agent.run()

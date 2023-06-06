@@ -44,6 +44,10 @@ class AngleInterpolationAgent(PIDAgent):
     def angle_interpolation(self, keyframes, perception):
         target_joints = {}
         # YOUR CODE HERE
+        # initialize joints
+        for joint in perception.joint:
+            target_joints[joint] = 0.0
+
         times = self.keyframes[1]
         keys = self.keyframes[2]
 
@@ -54,6 +58,7 @@ class AngleInterpolationAgent(PIDAgent):
         if perception.time - self.startTime > stopTime:
             #self.startTime = perception.time
             self.keyframes = ([], [], [])
+            return target_joints
 
         # current time of the movement
         time = perception.time - self.startTime
@@ -100,8 +105,8 @@ class AngleInterpolationAgent(PIDAgent):
 
         return target_joints
 
-    def restart_keyframe(perception):
-        self.startTime = self.perception
+    def restart_keyframe(self):
+        self.startTime = self.perception.time
 
 if __name__ == '__main__':
     agent = AngleInterpolationAgent()

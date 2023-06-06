@@ -16,6 +16,9 @@ import pickle
 
 
 class PostureRecognitionAgent(AngleInterpolationAgent):
+
+    previous_posture = 'unknown'
+
     def __init__(self, simspark_ip='localhost',
                  simspark_port=3100,
                  teamname='DAInamite',
@@ -36,6 +39,8 @@ class PostureRecognitionAgent(AngleInterpolationAgent):
         joint_names = ["LHipYawPitch", "LHipRoll", "LHipPitch", "LKneePitch", 
         "RHipYawPitch", "RHipRoll", "RHipPitch", "RKneePitch"]
 
+        posture_names = ['Back', 'Knee', 'Left', 'Frog', 'Right', 'HeadBack', 'Sit', 'StandInit', 'Belly', 'Stand', 'Crouch']
+
         joints = [[]]
 
         for joint in joint_names:
@@ -43,10 +48,9 @@ class PostureRecognitionAgent(AngleInterpolationAgent):
         for i in range(0, len(perception.imu)):
             joints[0].append(perception.imu[i])
 
-        posture = self.posture_classifier.predict(joints)
-        self.posture = posture
-
-        return posture
+        self.previous_posture = posture
+        self.posture = posture_names[int(self.posture_classifier.predict(joints))]
+        return self.posture
 
 if __name__ == '__main__':
     agent = PostureRecognitionAgent()
